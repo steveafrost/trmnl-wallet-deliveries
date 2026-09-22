@@ -4,11 +4,12 @@ no_screen_padding: 'no'
 dark_mode: 'no'
 static_data: ''
 polling_verb: get
+framework_version:
+serverless_language:
 polling_url: ''
 polling_headers: ''
 polling_body: ''
-name: Wallet Deliveries
-refresh_interval: 15
+id: 485286
 custom_fields:
 - keyname: about
   name: About This Plugin
@@ -54,3 +55,6 @@ custom_fields:
   name: Max Deliveries
   default: '8'
   description: Upper bound on rows rendered. The sender also caps its payload.
+name: Wallet Deliveries
+description:
+refresh_interval: 15

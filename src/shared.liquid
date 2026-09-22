@@ -1,0 +1,144 @@
+{% comment %}
+Normalisation layer.
+
+The phone posts one event per Wallet/carrier notification and TRMNL streams
+them, so `events` accumulates newest-last:
+
+  {"merge_variables": {"events": [{"merchant": ..., "phrase": ...}]}}
+
+Nothing else is stored anywhere. Each merchant is reduced to its newest event,
+and each row falls into a bucket by keyword:
+
+  issue      delayed, delivery attempted
+  today      out for delivery, arriving
+  moving     shipped, in transit, on its way, order confirmed
+  delivered  delivered
+
+A bucket list ("today,issue") also sets priority order, which is how the
+quadrant picks the row worth showing when space is tight.
+{% endcomment %}
+
+{% template delivery_row %}
+{% assign phrase = phrase | default: "" | downcase %}
+{% assign status_text = "Update" %}
+{% if phrase contains "delayed" %}{% assign status_text = "Delayed" %}
+{% elsif phrase contains "attempted" %}{% assign status_text = "Delivery attempted" %}
+{% elsif phrase contains "out for delivery" %}{% assign status_text = "Out for delivery" %}
+{% elsif phrase contains "arriving" %}{% assign status_text = "Arriving" %}
+{% elsif phrase contains "delivered" %}{% assign status_text = "Delivered" %}
+{% elsif phrase contains "shipped" %}{% assign status_text = "Shipped" %}
+{% elsif phrase contains "in transit" %}{% assign status_text = "In transit" %}
+{% elsif phrase contains "on its way" %}{% assign status_text = "On its way" %}
+{% elsif phrase contains "order confirmed" %}{% assign status_text = "Order confirmed" %}
+{% endif %}
+<div class="item w--full">
+  <div class="meta"></div>
+  <div class="content w--full">
+    {% if style == "line" %}
+      <span class="title title--small">{{ merchant | default: "Package" | escape }}</span>
+      <span class="description">{{ status_text }}{% if show_carrier == "yes" and carrier and carrier != "" %} · {{ carrier | escape }}{% endif %}{% if show_tracking == "yes" and tracking and tracking != "" %} · {{ tracking | escape }}{% endif %}</span>
+    {% else %}
+      <span class="title title--small lg:title--base">{{ merchant | default: "Package" | escape }}</span>
+      <span class="description lg:description--large">{{ status_text }}{% if show_carrier == "yes" and carrier and carrier != "" %} · {{ carrier | escape }}{% endif %}{% if show_tracking == "yes" and tracking and tracking != "" %} · {{ tracking | escape }}{% endif %}</span>
+    {% endif %}
+  </div>
+</div>
+{% endtemplate %}
+
+{% comment %}
+One section: a label, its rows, or an honest placeholder when the bucket is
+empty. Two passes over the same dedupe - the first counts, the second renders -
+because a rendered section cannot report its own count back to the caller.
+{% endcomment %}
+{% template bucket_section %}
+{% assign levels = bucket | split: "," %}
+{% assign limit = limit | default: 4 | plus: 0 %}
+
+{% comment %}
+Pass 1: how many rows this section will show - one per merchant. Events that
+carry neither a merchant nor a status are ignored: a shortcut run with no
+notification input posts an all-empty event, and it must not become a row.
+{% endcomment %}
+{% assign seen = "|" %}
+{% assign count = 0 %}
+{% for e in newest %}
+  {% assign phrase = e.phrase | default: "" | strip %}
+  {% assign merchant = e.merchant | default: "" | strip %}
+  {% unless phrase == "" and merchant == "" %}
+    {% assign key = merchant | downcase %}
+    {% if key == "" %}{% assign key = phrase | downcase %}{% endif %}
+    {% assign tok = "|" | append: key | append: "|" %}
+    {% unless seen contains tok %}
+      {% assign seen = seen | append: tok %}
+      {% assign phrase = phrase | downcase %}
+      {% assign b = "moving" %}
+      {% if phrase contains "delayed" or phrase contains "attempted" %}{% assign b = "issue" %}
+      {% elsif phrase contains "out for delivery" or phrase contains "arriving" %}{% assign b = "today" %}
+      {% elsif phrase contains "delivered" %}{% assign b = "delivered" %}
+      {% endif %}
+      {% if levels contains b %}{% assign count = count | plus: 1 %}{% endif %}
+    {% endunless %}
+  {% endunless %}
+{% endfor %}
+
+{% if label and label != "" %}
+  <div class="label label--underline {{ label_class }}">{{ label }}</div>
+{% endif %}
+{% if count == 0 %}
+  {% if placeholder and placeholder != "" %}
+    <span class="description">{{ placeholder }}</span>
+  {% endif %}
+{% else %}
+  {% comment %}
+  Pass 2: rows, level by level so the section keeps its priority order. A
+  merchant is only marked off once it has rendered (or once it is clear this
+  section will never show it) - marking on first sight would swallow rows that
+  belong to a later level, and not marking at all would let a stale event from
+  a merchant whose newest event sits in another section leak in.
+  {% endcomment %}
+  {% assign seen = "|" %}
+  {% assign shown = 0 %}
+  {% for level in levels %}
+    {% for e in newest %}
+      {% assign phrase = e.phrase | default: "" | strip %}
+      {% assign merchant = e.merchant | default: "" | strip %}
+      {% unless phrase == "" and merchant == "" %}
+        {% assign key = merchant | downcase %}
+        {% if key == "" %}{% assign key = phrase | downcase %}{% endif %}
+        {% assign tok = "|" | append: key | append: "|" %}
+        {% unless seen contains tok %}
+          {% assign phrase = phrase | downcase %}
+          {% assign b = "moving" %}
+          {% if phrase contains "delayed" or phrase contains "attempted" %}{% assign b = "issue" %}
+          {% elsif phrase contains "out for delivery" or phrase contains "arriving" %}{% assign b = "today" %}
+          {% elsif phrase contains "delivered" %}{% assign b = "delivered" %}
+          {% endif %}
+          {% if b == level and shown < limit %}
+            {% assign seen = seen | append: tok %}
+            {% assign shown = shown | plus: 1 %}
+            {% render "delivery_row", merchant: e.merchant, phrase: e.phrase, carrier: e.carrier, tracking: e.tracking, style: style, show_carrier: show_carrier, show_tracking: show_tracking %}
+          {% else %}
+            {% unless levels contains b %}{% assign seen = seen | append: tok %}{% endunless %}
+          {% endif %}
+        {% endunless %}
+      {% endunless %}
+    {% endfor %}
+  {% endfor %}
+{% endif %}
+{% endtemplate %}
+
+{% template empty_state %}
+<div class="layout layout--col layout--center">
+  <span class="title lg:title--large">Nothing in flight</span>
+  <span class="description lg:description--large">Wallet isn't tracking any open deliveries.</span>
+</div>
+{% endtemplate %}
+
+{% template title_bar %}
+<div class="title_bar">
+  <span class="title">{{ title | default: "Deliveries" | escape }}</span>
+  {% if updated and updated != "" %}
+    <span class="instance">{{ updated | escape }}</span>
+  {% endif %}
+</div>
+{% endtemplate %}

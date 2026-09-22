@@ -1,0 +1,8 @@
+_build/
+.trmnlp/
+*.log
+.DS_Store
+screen-preview.png
+DEPLOYMENT.local.md
+__pycache__/
+preview-*.png

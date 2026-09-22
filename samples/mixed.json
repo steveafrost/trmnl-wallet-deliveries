@@ -1,0 +1,10 @@
+{
+  "events": [
+    { "merchant": "Target", "phrase": "Delivered", "carrier": "FedEx" },
+    { "merchant": "Chewy", "phrase": "Your order has shipped", "carrier": "FedEx", "tracking": "771012345678" },
+    { "merchant": "Apple", "phrase": "order confirmed" },
+    { "merchant": "Home Depot", "phrase": "Delivery delayed by weather" },
+    { "merchant": "Amazon", "phrase": "shipped" },
+    { "merchant": "Amazon", "phrase": "Your package is out for delivery", "carrier": "USPS", "tracking": "TBA123456789" }
+  ]
+}

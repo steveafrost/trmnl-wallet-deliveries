@@ -1,0 +1,60 @@
+---
+strategy: webhook
+no_screen_padding: 'no'
+dark_mode: 'no'
+static_data: '{"events": [{"merchant": "Target", "phrase": "Delivered", "carrier": "FedEx"}, {"merchant": "Chewy", "phrase": "Your order has shipped", "carrier": "FedEx", "tracking": "771012345678"}, {"merchant": "Apple", "phrase": "order confirmed"}, {"merchant": "Home Depot", "phrase": "Delivery delayed by weather"}, {"merchant": "Amazon", "phrase": "shipped"}, {"merchant": "Amazon", "phrase": "Your package is out for delivery", "carrier": "USPS", "tracking": "TBA123456789"}], "updated": "Sep 22, 2:05 PM"}'
+polling_verb: get
+framework_version:
+serverless_language:
+polling_url: ''
+polling_headers: ''
+polling_body: ''
+custom_fields:
+- keyname: about
+  name: About This Plugin
+  field_type: author_bio
+  category: productivity
+  description: 'Deliveries from Apple Wallet''s order tracking, pushed straight from your iPhone by a Shortcut — no Parcel account, no email scanner, no server.<br/> Requires iOS 27 on an Apple Intelligence iPhone and a one-time Shortcut setup: <a href="https://github.com/steveafrost/trmnl-wallet-deliveries#setup">setup guide</a>.'
+  github_url: https://github.com/steveafrost/trmnl-wallet-deliveries
+- keyname: webhook_url
+  field_type: copyable_webhook_url
+  name: Webhook URL
+  description: Paste this into the iPhone Shortcut that sends deliveries.
+  help_text: This appears after creating or saving the plugin instance.
+- keyname: title
+  field_type: string
+  name: Screen Title
+  default: Deliveries
+  description: Shown in the bottom title bar.
+- keyname: show_carrier
+  field_type: select
+  name: Show Carrier
+  default: 'yes'
+  options:
+  - 'yes'
+  - 'no'
+  description: Show the carrier name (UPS, USPS, FedEx...) on each row.
+- keyname: show_tracking
+  field_type: select
+  name: Show Tracking
+  default: 'no'
+  options:
+  - 'yes'
+  - 'no'
+  description: Show the tracking number tail on each row. Space is tight on e-ink.
+- keyname: hide_delivered
+  field_type: select
+  name: Hide Delivered
+  default: 'no'
+  options:
+  - 'yes'
+  - 'no'
+  description: Drop delivered packages from the screen entirely.
+- keyname: max_items
+  field_type: number
+  name: Max Deliveries
+  default: '8'
+  description: Upper bound on rows rendered. The sender also caps its payload.
+name: Wallet Deliveries
+description:
+refresh_interval: 15

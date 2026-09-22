@@ -1,0 +1,29 @@
+{% assign cf = trmnl.plugin_settings.custom_fields_values %}
+{% assign title = cf.title | default: "Deliveries" %}
+{% assign show_carrier = cf.show_carrier | default: "yes" %}
+{% assign newest = events | reverse %}
+
+{% comment %}
+A quadrant fits two rows at most, so it shows the most urgent ones in priority
+order (issue, today, moving, delivered) and nothing else.
+{% endcomment %}
+{% if events == empty %}
+  <div class="layout layout--row layout--center">
+    <div class="columns">
+      <div class="column">
+        <span class="title">Nothing in flight</span>
+        <span class="description">No open deliveries in Wallet.</span>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="layout layout--row layout--top">
+    <div class="columns">
+      <div class="column" data-list-limit="true" data-list-limit-count="2" data-list-hidden-count="true">
+        {% render "bucket_section", newest: newest, bucket: "issue,today,moving,delivered", limit: 2, style: "item", label: "", label_class: "", placeholder: "", show_carrier: show_carrier, show_tracking: "no" %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% render "title_bar", title: title, updated: updated %}

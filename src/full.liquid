@@ -1,0 +1,28 @@
+{% assign cf = trmnl.plugin_settings.custom_fields_values %}
+{% assign title = cf.title | default: "Deliveries" %}
+{% assign show_carrier = cf.show_carrier | default: "yes" %}
+{% assign show_tracking = cf.show_tracking | default: "no" %}
+{% assign hide_delivered = cf.hide_delivered | default: "no" %}
+{% assign max_items = cf.max_items | default: "8" | plus: 0 %}
+{% assign newest = events | reverse %}
+
+{% if events == empty %}
+  {% render "empty_state" %}
+{% else %}
+  <div class="layout layout--row layout--top">
+    <div class="columns gap--small lg:gap--large">
+      <div class="column" data-list-limit="true" data-list-limit-count="6" data-list-hidden-count="true">
+        {% render "bucket_section", newest: newest, bucket: "today,issue", limit: max_items, style: "item", label: "Arriving", label_class: "mb--2 lg:mb--4 lg:label--large", placeholder: "Nothing out for delivery.", show_carrier: show_carrier, show_tracking: show_tracking %}
+      </div>
+
+      <div class="column" data-list-limit="true" data-list-limit-count="6" data-list-hidden-count="true">
+        {% render "bucket_section", newest: newest, bucket: "moving", limit: max_items, style: "item", label: "On the way", label_class: "mb--2 lg:mb--4 lg:label--large", placeholder: "Nothing in transit.", show_carrier: show_carrier, show_tracking: show_tracking %}
+        {% if hide_delivered != "yes" %}
+          {% render "bucket_section", newest: newest, bucket: "delivered", limit: 2, style: "item", label: "Delivered", label_class: "mt--2 mb--1 lg:mt--4 lg:mb--2 lg:label--large", placeholder: "", show_carrier: show_carrier, show_tracking: show_tracking %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% render "title_bar", title: title, updated: updated %}

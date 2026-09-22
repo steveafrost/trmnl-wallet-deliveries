@@ -1,31 +1,49 @@
 {% assign title = trmnl.plugin_settings.custom_fields_values.title | default: "Deliveries" %}
 {% assign show_carrier = trmnl.plugin_settings.custom_fields_values.show_carrier | default: "yes" %}
+
 {% assign arriving = deliveries | where: "status", "out_for_delivery" %}
 {% assign delayed = deliveries | where: "status", "delayed" %}
 {% assign moving = deliveries | where: "status", "in_transit" %}
 {% assign ordered = deliveries | where: "status", "ordered" %}
 {% assign moving = moving | concat: ordered %}
+{% assign delivered = deliveries | where: "status", "delivered" %}
+
+{% comment %} A quadrant has room for one headline row plus a count summary. {% endcomment %}
+{% assign primary = arriving.first | default: delayed.first | default: moving.first | default: delivered.first %}
 
 {% if deliveries == empty %}
-  <div class="layout layout--col layout--center">
-    <span class="title">Nothing in flight</span>
-    <span class="description">{{ deliveries.size }} deliveries tracked</span>
+  <div class="layout layout--row layout--center">
+    <div class="columns">
+      <div class="column">
+        <span class="title">Nothing in flight</span>
+        <span class="description">No open deliveries in Wallet.</span>
+      </div>
+    </div>
   </div>
 {% else %}
-  <div class="layout layout--col layout--top">
-    <div class="column" data-list-limit="true" data-list-limit-count="3" data-list-hidden-count="true">
-      {% for d in arriving limit: 1 %}
-        {% render "delivery_line", d: d, show_carrier: show_carrier %}
-      {% endfor %}
-      {% for d in delayed limit: 1 %}
-        {% render "delivery_line", d: d, show_carrier: show_carrier %}
-      {% endfor %}
-      {% if arriving == empty and delayed == empty %}
-        {% for d in moving limit: 2 %}
-          {% render "delivery_line", d: d, show_carrier: show_carrier %}
-        {% endfor %}
-      {% endif %}
-      {% render "count_line", deliveries: deliveries %}
+  <div class="layout layout--row layout--center">
+    <div class="columns">
+      <div class="column">
+        <div class="item w--full">
+          <div class="meta"></div>
+          <div class="content w--full">
+            <span class="title lg:title--base">{{ primary.merchant | default: "Package" | escape }}</span>
+            <span class="description lg:description--large">
+              {% case primary.status %}
+                {% when "out_for_delivery" %}Out for delivery
+                {% when "delayed" %}Delayed
+                {% when "delivered" %}Delivered
+                {% when "in_transit" %}In transit
+                {% when "ordered" %}Ordered
+                {% else %}Update
+              {% endcase %}{% if primary.eta and primary.eta != "" %} · {{ primary.eta | escape }}{% endif %}{% if show_carrier == "yes" and primary.carrier and primary.carrier != "" %} · {{ primary.carrier | escape }}{% endif %}
+            </span>
+          </div>
+        </div>
+        <span class="description">
+          {{ deliveries.size }} in flight{% if arriving.size > 0 %} · {{ arriving.size }} arriving{% endif %}{% if delayed.size > 0 %} · {{ delayed.size }} delayed{% endif %}
+        </span>
+      </div>
     </div>
   </div>
 {% endif %}

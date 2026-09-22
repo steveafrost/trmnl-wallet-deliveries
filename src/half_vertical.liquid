@@ -13,33 +13,33 @@
 {% if deliveries == empty %}
   {% render "empty_state" %}
 {% else %}
-  <div class="layout layout--col layout--top">
-    <div class="column" data-list-limit="true" data-list-limit-count="7" data-list-hidden-count="true">
-      <div class="label label--underline mb--2 lg:label--large">Arriving</div>
-      {% for d in arriving %}
-        {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
-      {% endfor %}
-      {% for d in delayed %}
-        {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
-      {% endfor %}
-      {% if arriving == empty and delayed == empty %}
-        <span class="description">Nothing out for delivery.</span>
-      {% endif %}
+  <div class="layout layout--row layout--top">
+    <div class="columns">
+      <div class="column" data-list-limit="true" data-list-limit-count="6" data-list-hidden-count="true">
+        {% if arriving.size > 0 or delayed.size > 0 %}
+          <div class="label label--underline mb--1 lg:label--large">Arriving</div>
+          {% for d in arriving limit: 3 %}
+            {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
+          {% endfor %}
+          {% for d in delayed limit: 2 %}
+            {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
+          {% endfor %}
+        {% endif %}
 
-      <div class="label label--underline mt--2 mb--1 lg:mt--3 lg:label--large">On the way</div>
-      {% for d in moving limit: 3 %}
-        {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
-      {% endfor %}
-      {% if moving == empty %}
-        <span class="description">Nothing in transit.</span>
-      {% endif %}
+        {% if moving.size > 0 %}
+          <div class="label label--underline mt--2 mb--1 lg:mt--3 lg:label--large">On the way</div>
+          {% for d in moving limit: 3 %}
+            {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
+          {% endfor %}
+        {% endif %}
 
-      {% if hide_delivered != "yes" and delivered.size > 0 %}
-        <div class="label label--underline mt--2 mb--1 lg:mt--3 lg:label--large">Delivered</div>
-        {% for d in delivered limit: 1 %}
-          {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
-        {% endfor %}
-      {% endif %}
+        {% if hide_delivered != "yes" and delivered.size > 0 %}
+          <div class="label label--underline mt--2 mb--1 lg:mt--3 lg:label--large">Delivered</div>
+          {% for d in delivered limit: 2 %}
+            {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
+          {% endfor %}
+        {% endif %}
+      </div>
     </div>
   </div>
 {% endif %}

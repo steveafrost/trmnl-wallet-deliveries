@@ -91,6 +91,16 @@ sample_files.each do |sample_file|
     when "mixed.json"
       failures << "#{layout}/#{sample_file}: missing merchant Amazon" unless rendered.include?("Amazon")
       failures << "#{layout}/#{sample_file}: missing out-for-delivery copy" unless rendered.include?("Out for delivery")
+      # Every delivery must reach the reader: a layout that silently drops a
+      # status bucket is a bug, not a design choice. The quadrant is the one
+      # intentional exception: it renders the single most urgent row only.
+      merchants = payload["deliveries"].map { |d| d["merchant"] }
+      merchants = merchants.first(1) if layout == "quadrant"
+      merchants.each do |merchant|
+        next if rendered.include?(merchant)
+
+        failures << "#{layout}/#{sample_file}: delivery #{merchant} did not render"
+      end
     when "singleton.json"
       failures << "#{layout}/#{sample_file}: single-item array did not render" unless rendered.include?("Amazon")
     when "empty.json"

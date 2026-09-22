@@ -6,9 +6,8 @@
 {% assign delayed = deliveries | where: "status", "delayed" %}
 {% assign moving = deliveries | where: "status", "in_transit" %}
 {% assign ordered = deliveries | where: "status", "ordered" %}
-{% assign active = arriving | concat: delayed %}
-{% assign active = active | concat: moving %}
-{% assign active = active | concat: ordered %}
+{% assign moving = moving | concat: ordered %}
+{% assign delivered = deliveries | where: "status", "delivered" %}
 
 {% if deliveries == empty %}
   {% render "empty_state" %}
@@ -37,8 +36,14 @@
         {% endif %}
       </div>
       <div class="column">
-        <div class="label label--underline mb--2 lg:label--large">Total</div>
-        {% render "count_line", deliveries: deliveries %}
+        <div class="label label--underline mb--2 lg:label--large">Delivered</div>
+        {% for d in delivered limit: 2 %}
+          {% render "delivery_line", d: d, show_carrier: show_carrier %}
+        {% endfor %}
+        {% if delivered == empty %}
+          <span class="description">None yet.</span>
+        {% endif %}
+        <span class="description">{{ deliveries.size }} in flight</span>
       </div>
     </div>
   </div>

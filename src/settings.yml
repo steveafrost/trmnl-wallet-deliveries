@@ -13,7 +13,7 @@ custom_fields:
 - keyname: about
   name: About This Plugin
   field_type: author_bio
-  category: shopping
+  category: productivity
   description: Deliveries pushed from Apple Wallet's order tracking by an iPhone Shortcut. No email scanner, no Parcel account. Notification automations post a compact array to this plugin's webhook.
 - keyname: webhook_url
   field_type: copyable_webhook_url

@@ -69,7 +69,21 @@ trmnlp push --force               # upload to trmnl.com (needs TRMNL_API_KEY)
 
 ## Install
 
-1. `trmnlp push` creates the private plugin on trmnl.com (`src/settings.yml` must **not** carry an `id` on first push; it does after that).
-2. Open the plugin instance, copy the **Webhook URL**.
+Deployed instance: **plugin setting `485286`**, dashboard <https://trmnl.com/plugin_settings/485286/edit>, device `15180` ("House TRMNL").
+
+1. `trmnlp push --force` creates the private plugin on trmnl.com. `src/settings.yml` must **not** carry an `id` on the first push; trmnlp writes the id back afterwards, so keep it committed and later pushes update instead of duplicating.
+2. The Webhook URL is **UI-only** — no API response exposes it. Open the plugin's config form and copy it, or skip it entirely (see below).
 3. Build the Shortcut from `SHORTCUT.md` and paste the URL into the final POST action.
-4. Add the plugin to a Playlist so the device requests it.
+4. Add the plugin to a device playlist, otherwise the instance never renders on the panel. `POST /api/devices/<device_id>/playlist_items` does this over the API.
+
+### Alternative to the webhook URL
+
+`POST /api/plugin_settings/<id>/data` accepts the same `{"merge_variables": {...}}` body and authenticates with the account-wide user API key (`Authorization: Bearer user_...`) instead of a per-plugin UUID. Handy for testing and for anything that already holds the key; prefer the webhook URL for a phone Shortcut, since it's scoped to this one plugin.
+
+### Deploy notes
+
+- Sending: `TRMNL_API_KEY=<user_...> trmnlp push --force` (or `trmnlp login` once).
+- `trmnlp lint` runs locally and on push; `scripts/validate-plugin.rb` renders all layouts against the samples.
+- Live webhook limits per the plugin form: **5 kB per payload, 10 kB on TRMNL+** (the docs page still says 2 kB — treat 2 kB as the conservative warn line, 5 kB as the hard ceiling).
+- The `about` field's `category` is validated server-side against an unpublished allow-list; `productivity` is known-good.
+

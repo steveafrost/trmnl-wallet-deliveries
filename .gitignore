@@ -2,3 +2,4 @@ _build/
 .trmnlp/
 *.log
 .DS_Store
+screen-preview.png

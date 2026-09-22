@@ -1,0 +1,47 @@
+{% assign title = trmnl.plugin_settings.custom_fields_values.title | default: "Deliveries" %}
+{% assign show_carrier = trmnl.plugin_settings.custom_fields_values.show_carrier | default: "yes" %}
+{% assign show_tracking = trmnl.plugin_settings.custom_fields_values.show_tracking | default: "no" %}
+
+{% assign arriving = deliveries | where: "status", "out_for_delivery" %}
+{% assign delayed = deliveries | where: "status", "delayed" %}
+{% assign moving = deliveries | where: "status", "in_transit" %}
+{% assign ordered = deliveries | where: "status", "ordered" %}
+{% assign active = arriving | concat: delayed %}
+{% assign active = active | concat: moving %}
+{% assign active = active | concat: ordered %}
+
+{% if deliveries == empty %}
+  {% render "empty_state" %}
+{% else %}
+  <div class="layout layout--row layout--top">
+    <div class="columns gap--small lg:gap--large">
+      <div class="column">
+        <div class="label label--underline mb--2 lg:label--large">Arriving</div>
+        {% for d in arriving limit: 2 %}
+          {% render "delivery_line", d: d, show_carrier: show_carrier %}
+        {% endfor %}
+        {% for d in delayed limit: 2 %}
+          {% render "delivery_line", d: d, show_carrier: show_carrier %}
+        {% endfor %}
+        {% if arriving == empty and delayed == empty %}
+          <span class="description">None today.</span>
+        {% endif %}
+      </div>
+      <div class="column" data-list-limit="true" data-list-limit-count="3" data-list-hidden-count="true">
+        <div class="label label--underline mb--2 lg:label--large">On the way</div>
+        {% for d in moving limit: 3 %}
+          {% render "delivery_line", d: d, show_carrier: show_carrier %}
+        {% endfor %}
+        {% if moving == empty %}
+          <span class="description">None.</span>
+        {% endif %}
+      </div>
+      <div class="column">
+        <div class="label label--underline mb--2 lg:label--large">Total</div>
+        {% render "count_line", deliveries: deliveries %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% render "title_bar", title: title, updated: updated %}

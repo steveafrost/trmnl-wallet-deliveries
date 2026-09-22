@@ -1,0 +1,47 @@
+{% assign title = trmnl.plugin_settings.custom_fields_values.title | default: "Deliveries" %}
+{% assign show_carrier = trmnl.plugin_settings.custom_fields_values.show_carrier | default: "yes" %}
+{% assign show_tracking = trmnl.plugin_settings.custom_fields_values.show_tracking | default: "no" %}
+{% assign hide_delivered = trmnl.plugin_settings.custom_fields_values.hide_delivered | default: "no" %}
+
+{% assign arriving = deliveries | where: "status", "out_for_delivery" %}
+{% assign delayed = deliveries | where: "status", "delayed" %}
+{% assign moving = deliveries | where: "status", "in_transit" %}
+{% assign ordered = deliveries | where: "status", "ordered" %}
+{% assign moving = moving | concat: ordered %}
+{% assign delivered = deliveries | where: "status", "delivered" %}
+
+{% if deliveries == empty %}
+  {% render "empty_state" %}
+{% else %}
+  <div class="layout layout--col layout--top">
+    <div class="column" data-list-limit="true" data-list-limit-count="7" data-list-hidden-count="true">
+      <div class="label label--underline mb--2 lg:label--large">Arriving</div>
+      {% for d in arriving %}
+        {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
+      {% endfor %}
+      {% for d in delayed %}
+        {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
+      {% endfor %}
+      {% if arriving == empty and delayed == empty %}
+        <span class="description">Nothing out for delivery.</span>
+      {% endif %}
+
+      <div class="label label--underline mt--2 mb--1 lg:mt--3 lg:label--large">On the way</div>
+      {% for d in moving limit: 3 %}
+        {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
+      {% endfor %}
+      {% if moving == empty %}
+        <span class="description">Nothing in transit.</span>
+      {% endif %}
+
+      {% if hide_delivered != "yes" and delivered.size > 0 %}
+        <div class="label label--underline mt--2 mb--1 lg:mt--3 lg:label--large">Delivered</div>
+        {% for d in delivered limit: 1 %}
+          {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+{% render "title_bar", title: title, updated: updated %}

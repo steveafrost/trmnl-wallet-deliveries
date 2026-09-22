@@ -1,0 +1,4 @@
+_build/
+.trmnlp/
+*.log
+.DS_Store

@@ -1,0 +1,56 @@
+---
+strategy: webhook
+no_screen_padding: 'no'
+dark_mode: 'no'
+static_data: ''
+polling_verb: get
+polling_url: ''
+polling_headers: ''
+polling_body: ''
+name: Wallet Deliveries
+refresh_interval: 15
+custom_fields:
+- keyname: about
+  name: About This Plugin
+  field_type: author_bio
+  category: shopping
+  description: Deliveries pushed from Apple Wallet's order tracking by an iPhone Shortcut. No email scanner, no Parcel account. Notification automations post a compact array to this plugin's webhook.
+- keyname: webhook_url
+  field_type: copyable_webhook_url
+  name: Webhook URL
+  description: Paste this into the iPhone Shortcut that sends deliveries.
+  help_text: This appears after creating or saving the plugin instance.
+- keyname: title
+  field_type: string
+  name: Screen Title
+  default: Deliveries
+  description: Shown in the bottom title bar.
+- keyname: show_carrier
+  field_type: select
+  name: Show Carrier
+  default: 'yes'
+  options:
+  - 'yes'
+  - 'no'
+  description: Show the carrier name (UPS, USPS, FedEx...) on each row.
+- keyname: show_tracking
+  field_type: select
+  name: Show Tracking
+  default: 'no'
+  options:
+  - 'yes'
+  - 'no'
+  description: Show the tracking number tail on each row. Space is tight on e-ink.
+- keyname: hide_delivered
+  field_type: select
+  name: Hide Delivered
+  default: 'no'
+  options:
+  - 'yes'
+  - 'no'
+  description: Drop delivered packages from the screen entirely.
+- keyname: max_items
+  field_type: number
+  name: Max Deliveries
+  default: '8'
+  description: Upper bound on rows rendered. The sender also caps its payload.

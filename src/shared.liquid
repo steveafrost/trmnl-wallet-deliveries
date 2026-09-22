@@ -1,0 +1,65 @@
+{% template delivery_item %}
+<div class="item w--full">
+  <div class="meta"></div>
+  <div class="content w--full">
+    <span class="title title--small lg:title--base">{{ d.merchant | default: "Package" | escape }}</span>
+    <span class="description lg:description--large">
+      {% assign status_text = "Update" %}
+      {% case d.status %}
+        {% when "out_for_delivery" %}{% assign status_text = "Out for delivery" %}
+        {% when "delayed" %}{% assign status_text = "Delayed" %}
+        {% when "delivered" %}{% assign status_text = "Delivered" %}
+        {% when "in_transit" %}{% assign status_text = "In transit" %}
+        {% when "ordered" %}{% assign status_text = "Ordered" %}
+      {% endcase %}
+      {{ status_text }}{% if d.eta and d.eta != "" %} · {{ d.eta | escape }}{% endif %}{% if show_carrier == "yes" and d.carrier and d.carrier != "" %} · {{ d.carrier | escape }}{% endif %}{% if show_tracking == "yes" and d.tracking and d.tracking != "" %} · {{ d.tracking | escape }}{% endif %}
+    </span>
+  </div>
+</div>
+{% endtemplate %}
+
+{% template delivery_line %}
+{% assign status_text = "Update" %}
+{% case d.status %}
+  {% when "out_for_delivery" %}{% assign status_text = "Out for delivery" %}
+  {% when "delayed" %}{% assign status_text = "Delayed" %}
+  {% when "delivered" %}{% assign status_text = "Delivered" %}
+  {% when "in_transit" %}{% assign status_text = "In transit" %}
+  {% when "ordered" %}{% assign status_text = "Ordered" %}
+{% endcase %}
+<div class="item w--full">
+  <div class="meta"></div>
+  <div class="content w--full">
+    <span class="title title--small">{{ d.merchant | default: "Package" | escape }}</span>
+    <span class="description">{{ status_text }}{% if d.eta and d.eta != "" %} · {{ d.eta | escape }}{% endif %}{% if show_carrier == "yes" and d.carrier and d.carrier != "" %} · {{ d.carrier | escape }}{% endif %}</span>
+  </div>
+</div>
+{% endtemplate %}
+
+{% template count_line %}
+{% assign delayed = deliveries | where: "status", "delayed" %}
+{% assign arriving = deliveries | where: "status", "out_for_delivery" %}
+<div class="item w--full">
+  <div class="meta"></div>
+  <div class="content w--full">
+    <span class="title title--small">{{ deliveries.size }} in flight</span>
+    <span class="description">{{ arriving.size }} arriving{% if delayed.size > 0 %} · {{ delayed.size }} delayed{% endif %}</span>
+  </div>
+</div>
+{% endtemplate %}
+
+{% template empty_state %}
+<div class="layout layout--col layout--center">
+  <span class="title lg:title--large">Nothing in flight</span>
+  <span class="description lg:description--large">Wallet isn't tracking any open deliveries.</span>
+</div>
+{% endtemplate %}
+
+{% template title_bar %}
+<div class="title_bar">
+  <span class="title">{{ title | default: "Deliveries" | escape }}</span>
+  {% if updated and updated != "" %}
+    <span class="instance">{{ updated | escape }}</span>
+  {% endif %}
+</div>
+{% endtemplate %}

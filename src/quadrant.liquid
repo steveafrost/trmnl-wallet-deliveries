@@ -1,0 +1,33 @@
+{% assign title = trmnl.plugin_settings.custom_fields_values.title | default: "Deliveries" %}
+{% assign show_carrier = trmnl.plugin_settings.custom_fields_values.show_carrier | default: "yes" %}
+{% assign arriving = deliveries | where: "status", "out_for_delivery" %}
+{% assign delayed = deliveries | where: "status", "delayed" %}
+{% assign moving = deliveries | where: "status", "in_transit" %}
+{% assign ordered = deliveries | where: "status", "ordered" %}
+{% assign moving = moving | concat: ordered %}
+
+{% if deliveries == empty %}
+  <div class="layout layout--col layout--center">
+    <span class="title">Nothing in flight</span>
+    <span class="description">{{ deliveries.size }} deliveries tracked</span>
+  </div>
+{% else %}
+  <div class="layout layout--col layout--top">
+    <div class="column" data-list-limit="true" data-list-limit-count="3" data-list-hidden-count="true">
+      {% for d in arriving limit: 1 %}
+        {% render "delivery_line", d: d, show_carrier: show_carrier %}
+      {% endfor %}
+      {% for d in delayed limit: 1 %}
+        {% render "delivery_line", d: d, show_carrier: show_carrier %}
+      {% endfor %}
+      {% if arriving == empty and delayed == empty %}
+        {% for d in moving limit: 2 %}
+          {% render "delivery_line", d: d, show_carrier: show_carrier %}
+        {% endfor %}
+      {% endif %}
+      {% render "count_line", deliveries: deliveries %}
+    </div>
+  </div>
+{% endif %}
+
+{% render "title_bar", title: title, updated: updated %}

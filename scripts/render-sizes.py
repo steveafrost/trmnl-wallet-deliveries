@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Preview-render every layout size of a TRMNL plugin instance.
 
-Usage: scripts/render-sizes.py [plugin_setting_id] [prefix]
+Usage: scripts/render-sizes.py <plugin_setting_id> [prefix]
 Writes preview-<size>.png for markup_full / half_horizontal / half_vertical / quadrant.
 """
 import base64
@@ -17,7 +17,7 @@ spec = importlib.util.spec_from_file_location("tapi", HERE / "trmnl-api.py")
 tapi = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tapi)
 
-PSID = sys.argv[1] if len(sys.argv) > 1 else "485286"
+PSID = sys.argv[1] if len(sys.argv) > 1 else sys.exit("usage: render-sizes.py <plugin_setting_id> [prefix]")
 PREFIX = sys.argv[2] if len(sys.argv) > 2 else "preview"
 SIZES = ["markup_full", "markup_half_horizontal", "markup_half_vertical", "markup_quadrant"]
 

@@ -1,87 +1,63 @@
 # iPhone side: Wallet → TRMNL
 
-Nothing here runs on a server. One Shortcut plus two automations. Requires iOS 27, an Apple Intelligence iPhone (15 Pro or newer), and Wallet order tracking enabled: **Settings → Wallet & Apple Pay → Order Tracking → Mail** on. Also leave Wallet's delivery notifications unmuted (per order: ⋯ → Mute Notifications) or there will be no events to forward.
+Nothing here runs on a server, and nothing here is hand-built: import the shortcut, paste one URL, add two automations. Requires iOS 27 on an Apple Intelligence iPhone (15 Pro or newer) and Wallet order tracking enabled: **Settings → Wallet & Apple Pay → Order Tracking → Mail** on. Leave Wallet's delivery notifications unmuted (per order: ⋯ → Mute Notifications) or there will be no events to forward.
 
-## Part 1 — the shortcut
+## Part 1 — import the shortcut
 
-Name it **Wallet Delivery Sync**.
+`shortcuts/Wallet Deliveries.shortcut` in this repo. Open it on the phone (AirDrop, or Files → tap) → **Add Shortcut**.
 
-**1. Get Value for "wallet_deliveries"** (Storage action, iOS 27)
-→ variable `Stored`. First run returns nothing; treat that as an empty list.
+Then edit the last action and replace `PASTE_YOUR_TRMNL_WEBHOOK_URL_HERE` with the **Webhook URL** from the plugin's settings page (`https://trmnl.com/api/custom_plugins/<uuid>`). That is the only field to touch.
 
-**2. If `Stored` has any value → Get Dictionary from Input → Get value for key `deliveries`**
-→ variable `Existing`. Seed it once by hand with an empty list; Storage keeps any type, lists included.
+### What the shortcut does
 
-**3. Text** — build the model prompt input:
+Four actions, in order:
+
+1. **Text** — the notification text, taken from Shortcut Input.
+2. **Match Text** — the status phrase (`out for delivery`, `delayed`, `delivered`, …).
+3. **Match Text** — the merchant (the leading text before a colon).
+4. **Match Text** ×2 — carrier and tracking number when the notification states them.
+5. **Get Contents of URL** — POST to your webhook:
+
+```json
+{"merge_variables": {"events": [{"merchant": "Amazon", "phrase": "out for delivery",
+                                 "carrier": "USPS", "tracking": "TBA123456789"}]},
+ "merge_strategy": "stream", "stream_limit": 20}
 ```
-Title: [Shortcut Input Title]
-Subtitle: [Shortcut Input Subtitle]
-Body: [Shortcut Input Body]
-```
 
-**4. Use Model** (Apple Intelligence, iOS 27) with prompt:
-```
-Extract one delivery from this notification. Reply with JSON only, no prose, no code fence:
-{"merchant":"short store name","status":"ordered|in_transit|out_for_delivery|delayed|delivered","eta":"short human text, e.g. Today by 9 PM or Sep 24","carrier":"USPS|UPS|FedEx|OnTrac|DHL|Amazon","tracking":"last 4 digits, prefixed with …","note":"max 6 words"}
-Use an empty string for anything the notification does not state. Never invent a tracking number.
-```
-→ variable `Parsed Text`.
-
-**5. Get Dictionary from Input** on `Parsed Text` → variable `New`. If this returns nothing (model emitted prose), fall back to the keyword mapping in Part 3 and continue with whatever fields you have.
-
-**6. Set `New`'s `at` to** Current Date (ISO 8601) so the trim step can age entries out.
-
-**7. Repeat with Each** in `Existing`, and inside the repeat:
-- **If** the item's `tracking` equals `New`'s `tracking` **and** `tracking` is not empty → skip (this is the status-update case; the new entry replaces it)
-- **Otherwise If** the item's `merchant` equals `New`'s `merchant` **and** `tracking` is empty for both → skip
-- **Otherwise** → Add item to `Kept`
-
-**8. Add `New`** to the front of `Kept` (newest first).
-
-**9. Trim to 8** — Get First 8 Items of `Kept` → variable `Trimmed`.
-(Dropping aged-out "delivered" rows is cheapest on the daily sweep, step 12.)
-
-**10. Set Value for "wallet_deliveries"** = `Trimmed`.
-
-**11. Get Contents of URL**
-- URL: the plugin's **Webhook URL** (`https://trmnl.com/api/custom_plugins/<uuid>`)
-- Method: **POST**, Request Body: **JSON**
-- Body, exactly two keys:
-  - `merge_variables` → dictionary with
-    - `updated` → Current Date formatted `MMM d, h:mm a`
-    - `deliveries` → `Trimmed`
-- No `merge_strategy` key: the Shortcut owns the whole array, so TRMNL should replace, not append.
-
-**12. Optional rate guard** (recommended: TRMNL allows 12 posts/hour, 30 on TRMNL+)
-Store `last_post_at` alongside; if fewer than 5 minutes have passed, end the shortcut after step 10 — storage is already current, and the next event reposts.
+One notification becomes one event. The shortcut keeps no state of its own — TRMNL appends each event to a rolling list of the last 20, and the plugin's markup reduces that list to one row per merchant, newest event winning. This is why the shortcut is four actions instead of the twenty-odd an on-phone array would need, and why nothing has to be seeded or migrated on first run.
 
 ## Part 2 — the automations
 
-**A. Notification trigger** (iOS 27)
-- App: **Wallet**. Add a second copy for **Mail** if your carriers notify there instead.
+**A. Notification trigger**
+- App: **Wallet**. Add a second copy for **Mail** — Amazon and some carriers only ever notify there.
 - Filter: notification **contains any** of `shipped`, `out for delivery`, `arriving`, `delivered`, `delivery`, `package`, `order`.
 - **Run Immediately** — turn off "Ask Before Running", or every package ping queues a prompt.
 
-**B. Time of Day trigger** (7:30 AM)
-Same shortcut. Reposting the stored array daily refreshes relative ETAs ("Today" → "Sep 24" → "Delivered") even when no notification fires, and guarantees a fresh screen each morning.
+**B. Optional, Mail-only orders**
+Nothing else is needed. There is deliberately no daily "refresh" automation: events carry no clock time, so reposting would only duplicate rows.
 
-## Part 3 — fallback mapping without Apple Intelligence
+## ~~Alternative — Delivery Poller~~ (DEAD: unbuildable, do not use)
 
-If you'd rather skip step 4, map the notification text with plain If/Contains and build the same dictionary:
+`shortcuts/Delivery Poller.shortcut` was a generated attempt at a mute-immune Mail-search poller. It **cannot work anywhere**: the generator invented the identifier `is.workflow.actions.mail.search` ("Find Mail Messages"), which exists on no current platform — macOS fails any run with "an action could not be found" (`Bundle is.workflow.actions.mail is missing from linkd`), and iPhones reject it identically. Apple's only Mail action is "Search Mail" (iOS 16+), which merely opens Mail's search UI and returns nothing. There is no data-returning Mail-search action in Shortcuts on any platform; notification automations (Part 2) remain the only Shortcuts path. The repo's poller generator (`scripts/make-poller.py`) and signed files are kept only as a record of the attempt.
 
-| notification text contains | status |
+## Tuning without touching the shortcut
+
+The plugin's settings page does the shaping:
+
+| Field | Effect |
 | --- | --- |
-| `delivered` | `delivered` |
-| `out for delivery` | `out_for_delivery` |
-| `delayed`, `weather`, `attempted` | `delayed` |
-| `shipped`, `in transit`, `on its way` | `in_transit` |
-| `order confirmed`, `we got your order` | `ordered` |
+| Screen Title | Bottom bar label |
+| Show Carrier | Carrier name on each row when the notification named one |
+| Show Tracking | Tracking number tail — off by default, space is tight on e-ink |
+| Hide Delivered | Drop delivered rows entirely |
+| Max Deliveries | Row ceiling per column |
 
-Merchant = first word of the notification title when it isn't `UPS`/`USPS`/`FedEx`. Cruder, but it removes the model call and works on any iPhone.
+Status mapping lives in `src/shared.liquid`: `delayed`/`attempted` → issue, `out for delivery`/`arriving` → today, `shipped`/`in transit`/`on its way`/`order confirmed` → moving, `delivered` → delivered.
 
 ## Known limits
 
-- **No backlog.** The first render shows only what arrives after the automation is live. Wallet's history can't be imported — there's no export.
-- **Wallet must be the notifier.** A package whose status only ever appeared in Mail (Amazon, most often) produces no Wallet notification; add the Mail automation to catch those.
-- **Array-of-one.** Shortcuts sometimes collapses a single-item list into a bare object. This plugin only ever reads arrays, so keep the body wrapped as a list (Storage's list type or an explicit List action).
-- **2KB payload.** 8 deliveries with short fields runs ~1.2KB; if you widen the fields, re-run `scripts/validate-plugin.rb`, which fails on oversize samples.
+- **No backlog.** The first screen shows only what arrives after the automation is live. Wallet's history can't be imported — there's no export.
+- **Wallet (or Mail) must be the notifier.** A package whose status only ever appeared in Mail produces no Wallet notification; that's what the second automation is for.
+- **One row per merchant, newest event wins.** A merchant that ships three things shows once, with its latest status. That's a deliberate trade for the small screen — the stream keeps the history, the markup shows the headline.
+- **Rate limit.** TRMNL accepts 12 posts/hour (30 on TRMNL+). Notification-driven posting sits far under it unless you're doing something unusual.
+- **Regex, not a model.** The merchant is "text before the first colon" and the status is a keyword match, so an unusually-worded notification can produce a vague row (a status of "Update"). The plugin never invents data: a field the notification didn't state arrives empty and is not shown.

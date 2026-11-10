@@ -1,39 +1,10 @@
 {
-  "updated": "Sep 22, 2:05 PM",
-  "deliveries": [
-    {
-      "merchant": "Amazon",
-      "status": "out_for_delivery",
-      "eta": "Today by 9 PM",
-      "carrier": "USPS",
-      "tracking": "…4821",
-      "note": "Out for delivery"
-    },
-    {
-      "merchant": "Chewy",
-      "status": "in_transit",
-      "eta": "Sep 24",
-      "carrier": "FedEx",
-      "tracking": "…7710"
-    },
-    {
-      "merchant": "Apple",
-      "status": "ordered",
-      "eta": "Sep 29",
-      "carrier": "UPS"
-    },
-    {
-      "merchant": "Home Depot",
-      "status": "delayed",
-      "eta": "Sep 23",
-      "carrier": "OnTrac",
-      "note": "Delayed by weather"
-    },
-    {
-      "merchant": "Target",
-      "status": "delivered",
-      "eta": "Sep 20",
-      "carrier": "FedEx"
-    }
+  "events": [
+    { "merchant": "Target", "phrase": "Delivered", "carrier": "FedEx" },
+    { "merchant": "Chewy", "phrase": "Your order has shipped", "carrier": "FedEx", "tracking": "771012345678" },
+    { "merchant": "Apple", "phrase": "order confirmed" },
+    { "merchant": "Home Depot", "phrase": "Delivery delayed by weather" },
+    { "merchant": "Amazon", "phrase": "shipped" },
+    { "merchant": "Amazon", "phrase": "Your package is out for delivery", "carrier": "USPS", "tracking": "TBA123456789" }
   ]
 }

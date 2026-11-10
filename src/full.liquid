@@ -1,47 +1,24 @@
-{% assign title = trmnl.plugin_settings.custom_fields_values.title | default: "Deliveries" %}
-{% assign show_carrier = trmnl.plugin_settings.custom_fields_values.show_carrier | default: "yes" %}
-{% assign show_tracking = trmnl.plugin_settings.custom_fields_values.show_tracking | default: "no" %}
-{% assign hide_delivered = trmnl.plugin_settings.custom_fields_values.hide_delivered | default: "no" %}
+{% assign cf = trmnl.plugin_settings.custom_fields_values %}
+{% assign title = cf.title | default: "Deliveries" %}
+{% assign show_carrier = cf.show_carrier | default: "yes" %}
+{% assign show_tracking = cf.show_tracking | default: "no" %}
+{% assign hide_delivered = cf.hide_delivered | default: "no" %}
+{% assign max_items = cf.max_items | default: "8" | plus: 0 %}
+{% assign newest = events | reverse %}
 
-{% assign arriving = deliveries | where: "status", "out_for_delivery" %}
-{% assign delayed = deliveries | where: "status", "delayed" %}
-{% assign moving = deliveries | where: "status", "in_transit" %}
-{% assign ordered = deliveries | where: "status", "ordered" %}
-{% assign moving = moving | concat: ordered %}
-{% assign delivered = deliveries | where: "status", "delivered" %}
-
-{% if deliveries == empty %}
+{% if events == empty %}
   {% render "empty_state" %}
 {% else %}
   <div class="layout layout--row layout--top">
     <div class="columns gap--small lg:gap--large">
       <div class="column" data-list-limit="true" data-list-limit-count="6" data-list-hidden-count="true">
-        <div class="label label--underline mb--2 lg:mb--4 lg:label--large">Arriving</div>
-        {% for d in arriving %}
-          {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
-        {% endfor %}
-        {% for d in delayed %}
-          {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
-        {% endfor %}
-        {% if arriving == empty and delayed == empty %}
-          <span class="description lg:description--large">Nothing out for delivery.</span>
-        {% endif %}
+        {% render "bucket_section", newest: newest, bucket: "today,issue", limit: max_items, style: "item", label: "Arriving", label_class: "mb--2 lg:mb--4 lg:label--large", placeholder: "Nothing out for delivery.", show_carrier: show_carrier, show_tracking: show_tracking %}
       </div>
 
       <div class="column" data-list-limit="true" data-list-limit-count="6" data-list-hidden-count="true">
-        <div class="label label--underline mb--2 lg:mb--4 lg:label--large">On the way</div>
-        {% for d in moving %}
-          {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
-        {% endfor %}
-        {% if moving == empty %}
-          <span class="description lg:description--large">Nothing in transit.</span>
-        {% endif %}
-
-        {% if hide_delivered != "yes" and delivered.size > 0 %}
-          <div class="label label--underline mt--2 mb--1 lg:mt--4 lg:mb--2 lg:label--large">Delivered</div>
-          {% for d in delivered limit: 2 %}
-            {% render "delivery_item", d: d, show_carrier: show_carrier, show_tracking: show_tracking %}
-          {% endfor %}
+        {% render "bucket_section", newest: newest, bucket: "moving", limit: max_items, style: "item", label: "On the way", label_class: "mb--2 lg:mb--4 lg:label--large", placeholder: "Nothing in transit.", show_carrier: show_carrier, show_tracking: show_tracking %}
+        {% if hide_delivered != "yes" %}
+          {% render "bucket_section", newest: newest, bucket: "delivered", limit: 2, style: "item", label: "Delivered", label_class: "mt--2 mb--1 lg:mt--4 lg:mb--2 lg:label--large", placeholder: "", show_carrier: show_carrier, show_tracking: show_tracking %}
         {% endif %}
       </div>
     </div>

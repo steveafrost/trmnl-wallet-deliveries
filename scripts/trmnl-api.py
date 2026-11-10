@@ -2,7 +2,7 @@
 """Talk to the TRMNL API using the key trmnlp already saved.
 
 Reads ~/.config/trmnlp/config.yml (or $TRMNL_API_KEY) and never prints the key.
-Only stdlib, so it runs on mr-chips' python3.9.
+Standard library only, so it runs on any macOS python3.
 
 Usage:
   scripts/trmnl-api.py settings                     # my plugin settings (instances)
@@ -89,7 +89,7 @@ def main() -> int:
         print("HTTP", status)
         rows = body.get("data", body) if isinstance(body, dict) else body
         for item in rows or []:
-            if "private" in str(item.get("keyname", "")) or item.get("id") in (485286,):
+            if "private" in str(item.get("keyname", "")):
                 print(f"  {item.get('id')}\t{item.get('keyname')}\t{item.get('name')}")
         print(f"  (total plugins: {len(rows or [])})")
         return 0

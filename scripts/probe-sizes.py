@@ -17,7 +17,7 @@ spec = importlib.util.spec_from_file_location("tapi", HERE / "trmnl-api.py")
 tapi = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tapi)
 
-PSID = sys.argv[1] if len(sys.argv) > 1 else "485286"
+PSID = sys.argv[1] if len(sys.argv) > 1 else sys.exit("usage: probe-sizes.py <plugin_setting_id>")
 CANDIDATES = [
     ("default", {}),
     ("size-quadrant", {"size": "quadrant"}),

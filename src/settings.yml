@@ -9,7 +9,6 @@ serverless_language:
 polling_url: ''
 polling_headers: ''
 polling_body: ''
-id: 485286
 oauth_enabled: 'false'
 oauth_pkce_enabled: 'no'
 oauth_authorize_url: ''
